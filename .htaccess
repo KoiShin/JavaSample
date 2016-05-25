@@ -1,0 +1,8 @@
+Options +Indexes
+AddType application/x-httpd-cgi .cgi
+AddType application/x-httpd-cgi .pl
+#AddType text/x-server-parsed-html .html
+
+order deny,allow
+deny from all
+allow from .nagano-nct.ac.jp
