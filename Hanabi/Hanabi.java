@@ -1,7 +1,8 @@
 import java.applet.*;                                // Applet
 import java.awt.*;                                   // Graphics, Image, Color
+import java.awt.event.*;
 
-public class Hanabi extends Applet implements Runnable {
+public class Hanabi extends Applet implements Runnable, AdjustmentListener {
     Thread thread = null;                            // スレッド
     int AppletWidth, AppletHeight;                   // アプレットのサイズ
     Image WorkImage;                                 // 作業用イメージ
@@ -27,6 +28,11 @@ public class Hanabi extends Applet implements Runnable {
     int Time[] = new int[HMAX];                      // 時間カウント
     float Hue[] = new float[HMAX];                   // 花火の色
     double Rad = Math.PI / 180;                      // ラジアン
+    Scrollbar HScrollBar, SScrollBar, BScrollBar;
+    Scrollbar AngleScrollBar, AngleRangeScrollBar;
+    float HValue[] = new float[HMAX];
+    float SValue[] = new float[HMAX];
+    float BValue[] = new float[HMAX];
 
     // 初期化処理 -----------------------------------------------------------------------
     public void init() {
@@ -52,6 +58,29 @@ public class Hanabi extends Applet implements Runnable {
         // 発射位置
         XP = AppletWidth / 2;
         YP = AppletHeight;
+
+        HScrollBar = new Scrollbar(Scrollbar.HORIZONTAL, 0, 1, 0, 100);
+        SScrollBar = new Scrollbar(Scrollbar.HORIZONTAL, 0, 1, 0, 100);
+        BScrollBar = new Scrollbar(Scrollbar.HORIZONTAL, 0, 1, 0, 100);
+        AngleScrollBar = new Scrollbar(Scrollbar.HORIZONTAL, 0, 1, 0, 100);
+        AngleRangeScrollBar = new Scrollbar(Scrollbar.HORIZONTAL, 0, 1, 0, 100);
+
+        setLayout(null);
+        HScrollBar.setBounds(0,  0, AppletWidth / 3, 20); // バーの設定
+        SScrollBar.setBounds(AppletWidth / 3, 0, AppletWidth / 3, 20); // バーの設定
+        BScrollBar.setBounds(AppletWidth / 3 * 2, 0, AppletWidth / 3, 20); // バーの設定
+        AngleScrollBar.setBounds(0, 20, AppletWidth / 2, 20); // バーの設定
+        AngleRangeScrollBar.setBounds(AppletWidth / 2, 20, AppletWidth / 2, 20); // バーの設定
+        add(HScrollBar);                                // スピードバーをアプレットに付加
+        add(SScrollBar);
+        add(BScrollBar);
+        add(AngleScrollBar);
+        add(AngleRangeScrollBar);
+        HScrollBar.addAdjustmentListener(this);
+        SScrollBar.addAdjustmentListener(this);
+        BScrollBar.addAdjustmentListener(this);
+        AngleScrollBar.addAdjustmentListener(this);
+        AngleRangeScrollBar.addAdjustmentListener(this);
     }
     // アプレット開始 -------------------------------------------------------------------
     public void start(){
@@ -64,7 +93,7 @@ public class Hanabi extends Applet implements Runnable {
     }
     // スレッド実行 ---------------------------------------------------------------------
     public void run(){
-        while(thread != null){                         // スレッドが存在している間
+        while (thread != null) {                         // スレッドが存在している間
             MakingHanabi();                           // 花火作成
             try {
                thread.sleep(sleeptime);                // 指定ミリ秒スレッドスリープ
@@ -140,15 +169,15 @@ public class Hanabi extends Applet implements Runnable {
                     Y[n][w] = Y[n][0] - yt;
                     if (COUNT - Process[n] > LEN)    {     // 設定した火の長さより大きい場合
                         if (Process[n] < COUNT / 2) {      // 指定回数の半分までは最大明度
-                            WorkGraphics.setColor(Color.getHSBColor(Hue[n], 1f, 1f));
+                            WorkGraphics.setColor(Color.getHSBColor(HValue[n], SValue[n], BValue[n]));
                         } else {                           // 後半は明度を徐々に落とす
-                            WorkGraphics.setColor(Color.getHSBColor(Hue[n], 1f,
+                            WorkGraphics.setColor(Color.getHSBColor(HValue[n], SValue[n],
                                 1f * (COUNT - Process[n]) / (COUNT / 2)));
                         }
                     } else {
-                        WorkGraphics.setColor(Color.getHSBColor(Hue[n], 1f, 0));// 黒色
+                        WorkGraphics.setColor(Color.getHSBColor(HValue[n], SValue[n], 0));// 黒色
                     }
-                    WorkGraphics.fillRect(X[n][w], Y[n][w],    SIZE, SIZE);     // 火を描画
+                    WorkGraphics.fillRect(X[n][w], Y[n][w], SIZE, SIZE);     // 火を描画
                 }
                 Process[n]++;                          // プロセスを変化
                 if (Process[n] > COUNT) {              // 指定段階を超えた場合
@@ -156,5 +185,27 @@ public class Hanabi extends Applet implements Runnable {
                 }
             }
         }
+    }
+
+    public void adjustmentValueChanged(AdjustmentEvent evt) {
+        Scrollbar scrollbar = (Scrollbar)evt.getSource();
+        if (scrollbar == HScrollBar) {
+            for (int n = 0; n < HMAX; n++) {
+                HValue[n] = HScrollBar.getValue() / (float)100.0;
+            }
+        } else if (scrollbar == SScrollBar) {
+            for (int n = 0; n < HMAX; n++) {
+                SValue[n] = SScrollBar.getValue() / (float)100.0;
+            }
+        } else if (scrollbar == BScrollBar) {
+            for (int n = 0; n < HMAX; n++) {
+                BValue[n] = BScrollBar.getValue() / (float)100.0;
+            }
+        } else if (scrollbar == AngleScrollBar) {
+            AngleRange = AngleScrollBar.getValue();
+        } else if (scrollbar == AngleRangeScrollBar) {
+            Rad = AngleRangeScrollBar.getValue();
+        }
+        repaint();
     }
 }
